@@ -1,17 +1,18 @@
-Configuration Réseau Cisco – SWITCHS, ROUTEUR, VLANs, DHCP, NTP
+
+# Configuration Réseau Cisco – SWITCHS, ROUTEUR, VLANs, DHCP, NTP
 
 ## Objectif
 Configurer un réseau complet incluant :
-- Un switch (SWITCH1)
+- Un switch 2960
 - Un routeur 1941
 - VLANs pour VoIP, WiFi, PC Fixes, Admin
 - Téléphones VoIP 7960
 - DHCP par VLAN
-- Points d'accès - Laptop
+- Points d'accès PT- Laptop
 
 ---
 
-##  SWITCH1 – Configuration Initiale
+## SWITCH1 – Configuration Initiale
 
 ### 1. Renommer le switch
 ```
@@ -22,7 +23,7 @@ hostname SWITCH1
 ### 2. Désactiver les ports inutilisés
 ```
 conf t
-interface range fastEthernet 0/10 - 24
+interface range fastEthernet 0/10 -24
 shutdown
 exit
 end
@@ -41,7 +42,7 @@ exit
 
 ---
 
-##  ROUTEUR – Sécurisation
+## ROUTEUR – Sécurisation
 ```
 enable
 conf t
@@ -52,7 +53,7 @@ wr
 
 ---
 
-##  Configuration des téléphones VoIP
+## Configuration des téléphones VoIP
 ```
 interface fa0/2
 switchport mode access
@@ -69,7 +70,10 @@ description VoIP_Telephone_2
 exit
 ```
 
+---
+
 ## SWITCH1 – VLANs et Ports
+
 ### Création des VLANs
 ```
 vlan 1
@@ -110,7 +114,7 @@ exit
 ```
 
 ### Ports Trunk
-bash
+```
 interface range fa0/1, fa0/9
 switchport mode trunk
 exit
@@ -121,6 +125,7 @@ wr
 ---
 
 ## ROUTEUR – Routage Inter-VLAN
+
 ### Activation du routage
 ```
 enable
@@ -154,13 +159,15 @@ ip address 192.168.30.1 255.255.255.0
 exit
 ```
 
-##  ROUTEUR – DHCP par VLAN
+---
+
+## ROUTEUR – DHCP par VLAN
 ```
 enable
 conf t
 
-interface gGig0/0
-no shutdown
+interface gig0/0
+no shut
 exit
 
 ip dhcp excluded-address 192.168.0.1 192.168.0.9
@@ -191,6 +198,8 @@ end
 wr
 ```
 
+---
+
 ## ROUTEUR – Configuration de l’heure
 ```
 enable
@@ -203,16 +212,20 @@ show clock
 ---
 
 ## Sauvegarde
-N’oubliez pas de sauvegarder à chaque étape :
+Ne pas oublier de sauvegarder à chaque étape :
 ```
 wr
 ```
 
-##  Remarques
+---
+
+## Remarques
 - Chaque VLAN est isolé avec sa propre passerelle.
 - Le DHCP est configuré pour éviter les adresses statiques.
 - Le port trunk transporte les VLANs jusqu’au routeur.
-- L'heure est synchronisée avec un serveur NTP (à configurer selon votre réseau).
+  
 
 ---
 
+## Auteur
+Configuration réalisée dans le cadre d’un projet pédagogique chez Laplateforme.
