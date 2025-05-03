@@ -1,181 +1,218 @@
-# Packet-Tracer-Laplateforme
+Configuration Réseau Cisco – SWITCHS, ROUTEUR, VLANs, DHCP, NTP
 
-#Configuration Routeur
-
-SWITCH
-
-# Renommer switchs
-Conf t
-Hostname SWITCH1
-
-----
-# DESACTIVER LES PORTS INUTILES
-Conf t
-Int range fa0/10 -24
-Shutdown
-Exit
-End
-Wr
-
--------
-# METTRE MOT DE PASS sur Switch
-En
-Conf t
-Line console 0
-Password Laplateforme,1,2,3 ( Switchs)
-Login
-Exit
-
----
-ROUTEUR MOT DE PASS
-En
-Conf t
-Line 0
-Enable secret Laplateforme
-Exit
-Wr
+## Objectif
+Configurer un réseau complet incluant :
+- Un switch (SWITCH1)
+- Un routeur 1941
+- VLANs pour VoIP, WiFi, PC Fixes, Admin
+- Téléphones VoIP 7960
+- DHCP par VLAN
+- Points d'accès - Laptop
 
 ---
 
+##  SWITCH1 – Configuration Initiale
 
+### 1. Renommer le switch
+```
+conf t
+hostname SWITCH1
+```
 
------------
-# SWITCH  1, 2 et 3 / CREATION DES VLANS
+### 2. Désactiver les ports inutilisés
+```
+conf t
+interface range fastEthernet 0/10 - 24
+shutdown
+exit
+end
+wr
+```
 
-Enable
-Conf t
+### 3. Sécuriser l'accès console
+```
+enable
+conf t
+line console 0
+password Laplateforme,1,2
+login
+exit
+```
 
-Vlan 1
-Name VoIP
-Exit
+---
 
-Vlan 10
-Name PT_WIFI
-Exit
+##  ROUTEUR – Sécurisation
+```
+enable
+conf t
+enable secret Laplateforme
+exit
+wr
+```
 
-Vlan 20
-Name PC_FIXES
-Exit
+---
 
+##  Configuration des téléphones VoIP
+```
+interface fa0/2
+switchport mode access
+switchport access vlan 1
+spanning-tree portfast
+description VoIP_Telephone_1
+exit
+
+interface fa0/3
+switchport mode access
+switchport access vlan 1
+spanning-tree portfast
+description VoIP_Telephone_2
+exit
+```
+
+## SWITCH1 – VLANs et Ports
+### Création des VLANs
+```
+vlan 1
+name VoIP
+exit
+vlan 10
+name PT_WIFI
+exit
+vlan 20
+name PC_FIXES
+exit
 vlan 30
-Name ADMIN
-Exit
+name ADMIN
+exit
+```
 
--------------------------------------------------------------
-Int range fa0/2 -3
-Switchport mode access
-Switchport access vlan 1
-Exit
+### Attribution des ports aux VLANs
+```
+interface range fa0/2 -3
+switchport mode access
+switchport access vlan 1
+exit
 
-Int range fa0/4 -5
-Switchport mode access
-Switchport access vlan 10
-Exit
+interface range fa0/4 -5
+switchport mode access
+switchport access vlan 10
+exit
 
-Interface range fa0/6 -7
-Switchport mode access
-Switchport access vlan 20
-Exit
+interface range fa0/6 -7
+switchport mode access
+switchport access vlan 20
+exit
 
-Int fa0/8
-Switchport mode access
-Switchport access vlan 30
-Exit
+interface fa0/8
+switchport mode access
+switchport access vlan 30
+exit
+```
 
-Interface range fa0/1, fa0/9
-Switchport mode trunk
-Exit
-End
-Wr
+### Ports Trunk
+bash
+interface range fa0/1, fa0/9
+switchport mode trunk
+exit
+end
+wr
+```
 
 ---
 
-# Modification Configuration Ip Phone 7960
-Int fa0/2
-Switchport mode access
-Switchport access vlan 1
-Spanning-tree portfastD
-Description VoIP_Telephone_1
-Exit
+## ROUTEUR – Routage Inter-VLAN
+### Activation du routage
+```
+enable
+configure terminal
+ip routing
+interface gig0/0
+no shutdown
+exit
+```
 
-Int fa0/3
-Switchport mode access
-Switchport access vlan 1
-Spanning-tree portfast
-Description VoIP_Telephone_2
-Exit
+### Configuration des sous-interfaces pour VLANs
+```
+interface g0/0.1
+encapsulation dot1Q 1 native
+ip address 192.168.0.1 255.255.255.0
+exit
 
----------------
-# ROUTEUR - Avtivation du routage
-# initialisation Routeur 1941
-En
-Conf t
-Ip routing
-Int gig0/0
-No shut
-Exit
+interface g0/0.10
+encapsulation dot1Q 10
+ip address 192.168.10.1 255.255.255.0
+exit
 
------------
-# ROUTEUR 1941 ( Configuration des VLANS)
-En
-Conf t
-Int g0/0.1
-Encapsulation dot1Q 1 native
-Ip address 192.168.0.1 255.255.255.0
-Exit
+interface g0/0.20
+encapsulation dot1Q 20
+ip address 192.168.20.1 255.255.255.0
+exit
 
-Int g0/0.10
-Encapsulation dot1Q 10
-Ip address 192.168.10.1 255.255.255.0
-Exit
+interface g0/0.30
+encapsulation dot1Q 30
+ip address 192.168.30.1 255.255.255.0
+exit
+```
 
-Int g0/0.20
-Encapsulation dot1Q 20
-Ip address 192.168.20.1 255.255.255.0
-Exit
+##  ROUTEUR – DHCP par VLAN
+```
+enable
+conf t
 
-Int g0/0.30
-Encapsulation dot1Q 30
-Ip address 192.168.30.1 255.255.255.0
-Exit
+interface gGig0/0
+no shutdown
+exit
 
-------------
-# CONFIGURATION DHCP - ROUTEUR 1941
-En
-Conf t
+ip dhcp excluded-address 192.168.0.1 192.168.0.9
+ip dhcp pool vlan1
+network 192.168.0.0 255.255.255.0
+default-router 192.168.0.1
+dns-server 8.8.8.8
 
-Int gig0/0
-No shut
-Exit
+ip dhcp excluded-address 192.168.10.1 192.168.10.9
+ip dhcp pool vlan10
+network 192.168.10.0 255.255.255.0
+default-router 192.168.10.1
+dns-server 8.8.8.8
 
-Ip dhcp excluded-address 192.168.0.1 192.168.0.9
-Ip dhcp pool vlan1
-Network 192.168.0.0 255.255.255.0
-Default-router 192.168.0.1
-Dns-server 8.8.8.8
-
-Ip dhcp excluded-address 192.168.10.1 192.168.10.9
-Ip dhcp pool vlan10
-Network 192.168.10.0 255.255.255.0
-Default-router 192.168.10.1
-Dns-server 8.8.8.8
-
-Ip dhcp excluded-address 192.168.20.1 192.168.20.9
-Ip dhcp pool vlan20
-etwork 192.168.20.0 255.255.255.0
+ip dhcp excluded-address 192.168.20.1 192.168.20.9
+ip dhcp pool vlan20
+network 192.168.20.0 255.255.255.0
 default-router 192.168.20.1
-Dns-server 8.8.8.8
+dns-server 8.8.8.8
 
-Ip dhcp excluded-address 192.168.30.1 192.168.30.9
-Ip dhcp pool vlan30
-Network 192.168.30.0 255.255.255.0
-Default-routeur 192.168.30.1
-Dns-server 8.8.8.8
-Exit
-End
-Wr
+ip dhcp excluded-address 192.168.30.1 192.168.30.9
+ip dhcp pool vlan30
+network 192.168.30.0 255.255.255.0
+default-router 192.168.30.1
+dns-server 8.8.8.8
+exit
+end
+wr
+```
 
----------------
-MDP routeur, Laplateforme
-MDP switch, Laplateforme, Laplateforme1, Laplteforme2
+## ROUTEUR – Configuration de l’heure
+```
+enable
+configure terminal
+clock set 00:03:00 4 May 2025
+exit
+show clock
+```
+
+---
+
+## Sauvegarde
+N’oubliez pas de sauvegarder à chaque étape :
+```
+wr
+```
+
+##  Remarques
+- Chaque VLAN est isolé avec sa propre passerelle.
+- Le DHCP est configuré pour éviter les adresses statiques.
+- Le port trunk transporte les VLANs jusqu’au routeur.
+- L'heure est synchronisée avec un serveur NTP (à configurer selon votre réseau).
+
+---
 
